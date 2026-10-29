@@ -1,5 +1,12 @@
 import { cookies } from "next/headers";
-import { getServerApiClient } from "../api/server-client";
+import {
+  ACCESS_TOKEN_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+  USER_ROLE_COOKIE,
+  accessTokenCookieOptions,
+  refreshTokenCookieOptions,
+  userRoleCookieOptions,
+} from "./cookies";
 
 export interface SessionUser {
   id: string;
@@ -13,36 +20,89 @@ export interface Session {
   accessToken?: string;
 }
 
+const API_BASE_URL =
+  process.env.INTERNAL_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:3000";
+
 /**
  * Retrieves the current authenticated user session from server-side cookies.
- * Calls GET /v1/users/me against the NestJS API with the access token.
+ * If the access token has expired but a valid refresh token exists, it automatically
+ * rotates the refresh token and sets the new access token in cookies.
  */
 export async function getSession(): Promise<Session> {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("eventpass_access_token")?.value;
+  let accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
+  const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
 
-  if (!accessToken) {
+  if (!accessToken && !refreshToken) {
     return { user: null };
   }
 
-  try {
-    const client = await getServerApiClient();
-    const response = await client.GET("/v1/users/me");
+  // If access token is missing but refresh token exists, attempt refresh
+  if (!accessToken && refreshToken) {
+    try {
+      const refreshRes = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        cache: "no-store",
+      });
 
-    if (response.error || !response.data) {
+      if (refreshRes.ok) {
+        const refreshed = await refreshRes.json();
+        accessToken = refreshed.accessToken;
+        cookieStore.set(ACCESS_TOKEN_COOKIE, refreshed.accessToken, accessTokenCookieOptions);
+        cookieStore.set(REFRESH_TOKEN_COOKIE, refreshed.refreshToken, refreshTokenCookieOptions);
+        cookieStore.set(USER_ROLE_COOKIE, refreshed.user.role, userRoleCookieOptions);
+
+        return {
+          user: refreshed.user,
+          accessToken: refreshed.accessToken,
+        };
+      }
+    } catch {
       return { user: null };
     }
+  }
 
-    const userData = response.data;
-    return {
-      user: {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        role: userData.role,
+  // Validate existing access token with GET /v1/users/me
+  try {
+    const res = await fetch(`${API_BASE_URL}/v1/users/me`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
-      accessToken,
-    };
+      cache: "no-store",
+    });
+
+    if (res.ok) {
+      const user = await res.json();
+      return { user, accessToken };
+    }
+
+    // Access token expired, attempt refresh with refreshToken
+    if (res.status === 401 && refreshToken) {
+      const refreshRes = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        cache: "no-store",
+      });
+
+      if (refreshRes.ok) {
+        const refreshed = await refreshRes.json();
+        cookieStore.set(ACCESS_TOKEN_COOKIE, refreshed.accessToken, accessTokenCookieOptions);
+        cookieStore.set(REFRESH_TOKEN_COOKIE, refreshed.refreshToken, refreshTokenCookieOptions);
+        cookieStore.set(USER_ROLE_COOKIE, refreshed.user.role, userRoleCookieOptions);
+
+        return {
+          user: refreshed.user,
+          accessToken: refreshed.accessToken,
+        };
+      }
+    }
+
+    return { user: null };
   } catch {
     return { user: null };
   }
