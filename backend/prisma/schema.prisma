@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ORGANIZER
+  ADMIN
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum TicketStatus {
+  VALID
+  CHECKED_IN
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens   RefreshToken[]
+  organizedEvents Event[]
+  tickets         Ticket[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Event {
+  id            String      @id @default(uuid())
+  slug          String      @unique
+  title         String
+  description   String
+  location      String
+  startsAt      DateTime
+  endsAt        DateTime
+  capacity      Int
+  coverImageUrl String?
+  status        EventStatus @default(DRAFT)
+  organizerId   String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  organizer User     @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  tickets   Ticket[]
+
+  @@index([status, startsAt])
+  @@map("events")
+}
+
+model Ticket {
+  id          String       @id @default(uuid())
+  code        String       @unique
+  status      TicketStatus @default(VALID)
+  eventId     String
+  userId      String
+  checkedInAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([code])
+  @@index([userId])
+  @@map("tickets")
+}

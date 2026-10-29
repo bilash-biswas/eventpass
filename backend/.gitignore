@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+dist/
+coverage/
+
+# Environment variables
+.env
+!.env.example
+
+# OS & Logs
+*.log
+.DS_Store
+Thumbs.db
+*.tsbuildinfo

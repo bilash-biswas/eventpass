@@ -1,0 +1,24 @@
+{
+  "name": "eventpass",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EventPass monorepo containing backend, web, and mobile clients",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm run --prefix backend lint",
+    "format": "npm run --prefix backend format",
+    "test": "npm run --prefix backend test",
+    "test:e2e": "npm run --prefix backend test:e2e",
+    "start:backend": "npm run --prefix backend start:dev"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "npm run --prefix backend lint",
+      "npm run --prefix backend format"
+    ]
+  }
+}
