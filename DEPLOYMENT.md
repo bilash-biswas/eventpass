@@ -89,19 +89,38 @@ npx prisma migrate deploy
 
 ## 🐳 Docker Deployment
 
-The multi-stage `backend/Dockerfile` produces a hardened Alpine image of ~150 MB:
-- Builds using `node:20-alpine` with build tools.
-- Prunes development dependencies with `npm prune --omit=dev`.
-- Runs as the unprivileged built-in `node` user (UID 1000).
-- Employs `dumb-init` as PID 1 to guarantee graceful OS signal handling (`SIGTERM`, `SIGINT`).
-- Includes a native `HEALTHCHECK` probe against `/v1/health`.
+Both the NestJS backend and Next.js frontend are containerized using production-grade multi-stage Dockerfiles:
+
+### Backend Docker Image (`backend/Dockerfile`)
+- Base image: `node:20-alpine`.
+- Non-root user: Runs as unprivileged `node` user (UID 1000).
+- Signal handling: Employs `dumb-init` as PID 1 for graceful termination.
+- Healthcheck: Native `HEALTHCHECK` probe against `/v1/health`.
+- Image footprint: ~150 MB after dev dependency pruning.
+
+### Frontend Docker Image (`frontend/Dockerfile`)
+- Base image: `node:20-alpine`.
+- Standalone mode: Leverages Next.js 15 `output: 'standalone'` bundling with minimal footprint.
+- Non-root user: Runs as unprivileged `nextjs` user (UID 1001).
+- Signal handling: Employs `dumb-init` as PID 1.
+- Healthcheck: Native `HEALTHCHECK` probe against `/`.
+
+### Running Full Stack with Docker Compose
+```bash
+# Build and launch PostgreSQL, NestJS API, and Next.js Frontend
+docker compose up --build -d
+
+# Check running container health status
+docker compose ps
+
+# View unified application logs
+docker compose logs -f
+```
 
 ### Building & Running Manually
 ```bash
-# Build production image
+# 1. Build & run Backend
 docker build -t eventpass-backend:latest ./backend
-
-# Run with environment variables
 docker run -d \
   --name eventpass-api \
   -p 3000:3000 \
@@ -109,8 +128,18 @@ docker run -d \
   -e DATABASE_URL="postgresql://user:pass@host:5432/eventpass_db?sslmode=require" \
   -e JWT_ACCESS_SECRET="your_secure_64_character_access_secret..." \
   -e JWT_REFRESH_SECRET="your_secure_64_character_refresh_secret..." \
-  -e CORS_ORIGIN="https://eventpass.io" \
+  -e CORS_ORIGIN="http://localhost:3001" \
   eventpass-backend:latest
+
+# 2. Build & run Frontend
+docker build -t eventpass-web:latest ./frontend
+docker run -d \
+  --name eventpass-web \
+  -p 3001:3000 \
+  -e NODE_ENV=production \
+  -e NEXT_PUBLIC_API_URL="http://localhost:3000" \
+  -e INTERNAL_API_URL="http://host.docker.internal:3000" \
+  eventpass-web:latest
 ```
 
 ---

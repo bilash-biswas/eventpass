@@ -146,6 +146,30 @@ npm run start
 
 ---
 
+## 🐳 Docker Deployment
+
+The frontend includes a multi-stage Dockerfile using Next.js 15 standalone output:
+
+```bash
+# Build the Docker image
+docker build -t eventpass-web ./frontend
+
+# Run container
+docker run -d \
+  --name eventpass-web \
+  -p 3001:3000 \
+  -e NEXT_PUBLIC_API_URL="http://localhost:3000" \
+  -e INTERNAL_API_URL="http://host.docker.internal:3000" \
+  eventpass-web
+```
+
+Or run with the entire platform via Docker Compose from the root directory:
+```bash
+docker compose up --build -d
+```
+
+---
+
 ## 💡 Pre-Seeded Test Accounts
 
 When testing against the local database seeded with `npm run prisma:seed` in `backend/`:
