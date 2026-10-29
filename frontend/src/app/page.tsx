@@ -1,10 +1,38 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, QrCode, ShieldCheck, Sparkles, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  QrCode,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getServerApiClient } from "@/lib/api/server-client";
+import { EventCard } from "@/components/events/event-card";
+import type { components } from "@/lib/api/schema";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const client = await getServerApiClient();
+  let featuredEvents: components["schemas"]["EventResponseDto"][] = [];
+
+  try {
+    const { data } = await client.GET("/v1/events", {
+      params: {
+        query: {
+          pageSize: 3,
+          sort: "asc",
+        },
+      },
+    });
+    featuredEvents = data?.items ?? [];
+  } catch {
+    featuredEvents = [];
+  }
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -40,6 +68,37 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Featured Events Section */}
+      {featuredEvents.length > 0 && (
+        <section className="py-16 bg-muted/20 border-b">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+              <div>
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-primary uppercase tracking-wider mb-1">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Happening Soon</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                  Featured Events
+                </h2>
+              </div>
+              <Button variant="ghost" asChild className="text-primary hover:text-primary">
+                <Link href="/events" className="flex items-center">
+                  View all events
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Feature Highlights Grid */}
       <section className="py-16 md:py-24 container mx-auto px-4 sm:px-6">
@@ -98,14 +157,14 @@ export default function HomePage() {
               </div>
               <CardTitle>Organizer Command Hub</CardTitle>
               <CardDescription>
-                Manage events, monitor live check-in progress, toggle publication state, and export
-                attendee rosters to CSV with a single click.
+                Full event lifecycle controls: draft, schedule, publish, track capacity in real time,
+                and export attendee rosters directly to CSV.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground flex items-center">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 mr-1.5" />
-                Live attendee count and CSV export
+                Direct CSV export and check-in metrics
               </p>
             </CardContent>
           </Card>
