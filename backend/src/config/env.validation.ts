@@ -62,6 +62,11 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1)
   THROTTLE_LIMIT: number = 100;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  THROTTLE_AUTH_LIMIT: number = 10;
 }
 
 export function validate(

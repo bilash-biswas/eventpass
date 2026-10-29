@@ -54,6 +54,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
           message = resObj.message;
         }
       }
+
+      if (statusCode === HttpStatus.TOO_MANY_REQUESTS) {
+        error = 'Too Many Requests';
+      }
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       switch (exception.code) {
         case 'P2002': {

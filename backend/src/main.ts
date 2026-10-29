@@ -81,6 +81,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document, {
     customSiteTitle: 'EventPass API Documentation',
+    jsonDocumentUrl: 'docs-json',
+    yamlDocumentUrl: 'docs-yaml',
   });
 
   await app.listen(port);

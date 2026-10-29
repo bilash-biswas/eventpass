@@ -5,6 +5,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
@@ -14,12 +15,16 @@ import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 
+const authLimit = process.env.NODE_ENV === 'test' ? 100 : 5;
+const refreshLimit = process.env.NODE_ENV === 'test' ? 100 : 10;
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Throttle({ default: { limit: authLimit, ttl: 60000 } })
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user account' })
@@ -36,11 +41,16 @@ export class AuthController {
     status: 409,
     description: 'Email address already in use.',
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests. Rate limit exceeded.',
+  })
   async register(@Body() dto: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: authLimit, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Authenticate user with email and password' })
@@ -53,11 +63,16 @@ export class AuthController {
     status: 401,
     description: 'Invalid email or password credentials.',
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests. Rate limit exceeded.',
+  })
   async login(@Body() dto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: refreshLimit, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -71,6 +86,10 @@ export class AuthController {
   @ApiResponse({
     status: 401,
     description: 'Invalid token, expired token, or token reuse detected.',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests. Rate limit exceeded.',
   })
   async refresh(@Body() dto: RefreshTokenDto): Promise<AuthResponseDto> {
     return this.authService.refresh(dto.refreshToken);

@@ -1,0 +1,1307 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully registered and authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or attempt to register as ADMIN."
+          },
+          "409": {
+            "description": "Email address already in use."
+          },
+          "429": {
+            "description": "Too many requests. Rate limit exceeded."
+          }
+        },
+        "summary": "Register a new user account",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User successfully logged in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid email or password credentials."
+          },
+          "429": {
+            "description": "Too many requests. Rate limit exceeded."
+          }
+        },
+        "summary": "Authenticate user with email and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New access and refresh token pair generated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid token, expired token, or token reuse detected."
+          },
+          "429": {
+            "description": "Too many requests. Rate limit exceeded."
+          }
+        },
+        "summary": "Rotate and exchange a valid refresh token for a new token pair",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Active session revoked successfully."
+          },
+          "401": {
+            "description": "Unauthorized access token."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Logout and revoke refresh token sessions",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/users/me": {
+      "get": {
+        "operationId": "UsersController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized access token."
+          },
+          "404": {
+            "description": "User profile not found."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get current authenticated user profile",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "operationId": "EventsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1-indexed)",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search keyword matching title or location (case-insensitive)",
+            "schema": {
+              "example": "Tech Summit",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Filter events starting on or after this ISO 8601 date",
+            "schema": {
+              "example": "2026-11-01T00:00:00.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Filter events starting on or before this ISO 8601 date",
+            "schema": {
+              "example": "2026-12-31T23:59:59.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction by startsAt timestamp",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of published events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEventsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Public listing of published events with search and filters",
+        "tags": [
+          "Events"
+        ]
+      },
+      "post": {
+        "operationId": "EventsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or startsAt >= endsAt."
+          },
+          "403": {
+            "description": "Forbidden: Requires ORGANIZER or ADMIN role."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Create a new event (ORGANIZER or ADMIN)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/v1/events/{slug}": {
+      "get": {
+        "operationId": "EventsController_findBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "description": "Unique event slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event details retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event not found or not published."
+          }
+        },
+        "summary": "Public event detail lookup by unique slug",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/v1/events/{id}": {
+      "patch": {
+        "operationId": "EventsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Event UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: You can only update your own events."
+          },
+          "404": {
+            "description": "Event not found."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Update event details or publish (owner only)",
+        "tags": [
+          "Events"
+        ]
+      },
+      "delete": {
+        "operationId": "EventsController_softCancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Event UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event successfully cancelled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: You do not have permission to cancel this event."
+          },
+          "404": {
+            "description": "Event not found."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Soft-cancel an event (sets status to CANCELLED, owner or ADMIN)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/v1/events/{id}/attendees": {
+      "get": {
+        "operationId": "EventsController_getAttendees",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Event UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of attendees and tickets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendeeResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Only the event organizer can view attendees."
+          },
+          "404": {
+            "description": "Event not found."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get attendee list for an event (owner only)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/v1/events/{id}/rsvp": {
+      "post": {
+        "operationId": "TicketsController_rsvp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Event UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "RSVP successful; ticket issued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Event is unpublished, cancelled, or has ended."
+          },
+          "404": {
+            "description": "Event not found."
+          },
+          "409": {
+            "description": "Conflict: User already RSVP'd or event is at full capacity."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "RSVP for an event and receive an entry ticket with QR code",
+        "tags": [
+          "Tickets"
+        ]
+      },
+      "delete": {
+        "operationId": "TicketsController_cancelRsvp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Event UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RSVP successfully cancelled."
+          },
+          "400": {
+            "description": "Ticket is already cancelled or already checked in."
+          },
+          "404": {
+            "description": "Ticket not found."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Cancel own RSVP and release event spot",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/v1/tickets/me": {
+      "get": {
+        "operationId": "TicketsController_getMyTickets",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of own tickets with event details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "List all tickets belonging to the current user",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/v1/tickets/check-in": {
+      "post": {
+        "operationId": "TicketsController_checkIn",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Check-in successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ticket is cancelled."
+          },
+          "403": {
+            "description": "Forbidden: You are not authorized for this event."
+          },
+          "404": {
+            "description": "Invalid ticket code."
+          },
+          "409": {
+            "description": "Conflict: Ticket has already been checked in."
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Atomic attendee check-in using QR code (event owner or ADMIN only)",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/v1/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "System is healthy and database is connected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database connection failed."
+          }
+        },
+        "summary": "Check service and database health status",
+        "tags": [
+          "Health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "EventPass API",
+    "description": "Production-ready REST API for EventPass ticketing and RSVP platform",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "System and database health checks"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication and session management"
+    },
+    {
+      "name": "Users",
+      "description": "User profile endpoints"
+    },
+    {
+      "name": "Events",
+      "description": "Event management and public listings"
+    },
+    {
+      "name": "Tickets",
+      "description": "RSVP, ticket issuance, and check-in"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "JWT-auth": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "Authorization",
+        "description": "Enter your JWT access token",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "alex@example.com",
+            "description": "Unique email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "Str0ngP@ssw0rd!",
+            "description": "Password with minimum 8 characters",
+            "minLength": 8
+          },
+          "name": {
+            "type": "string",
+            "example": "Alex Johnson",
+            "description": "User full display name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ORGANIZER"
+            ],
+            "default": "USER",
+            "description": "User role (USER or ORGANIZER). Cannot self-register as ADMIN."
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "name"
+        ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d9b2d63d-a233-4123-8478-f7b8f9e61234",
+            "description": "Unique user identifier (UUID)"
+          },
+          "email": {
+            "type": "string",
+            "example": "alex@example.com",
+            "description": "Unique user email address"
+          },
+          "name": {
+            "type": "string",
+            "example": "Alex Johnson",
+            "description": "Full name of the user"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ORGANIZER",
+              "ADMIN"
+            ],
+            "example": "USER",
+            "description": "User access role"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-29T01:00:00.000Z",
+            "description": "User creation timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role",
+          "createdAt"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "description": "JWT bearer access token"
+          },
+          "refreshToken": {
+            "type": "string",
+            "example": "8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a",
+            "description": "Cryptographically random refresh token"
+          },
+          "user": {
+            "description": "Authenticated user profile details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "user"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "alex@example.com",
+            "description": "Registered user email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "Str0ngP@ssw0rd!",
+            "description": "User account password"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a",
+            "description": "Current active refresh token for rotation"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "LogoutDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a",
+            "description": "Refresh token to revoke specifically. If omitted, all active sessions for the user are revoked."
+          }
+        }
+      },
+      "EventResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "c6b3e21a-4d5e-4f12-9876-0a1b2c3d4e5f",
+            "description": "Unique event identifier (UUID)"
+          },
+          "slug": {
+            "type": "string",
+            "example": "global-tech-summit-2026",
+            "description": "Unique URL-friendly slug"
+          },
+          "title": {
+            "type": "string",
+            "example": "Global Tech Summit 2026",
+            "description": "Event title"
+          },
+          "description": {
+            "type": "string",
+            "example": "Detailed description of the event...",
+            "description": "Full event description"
+          },
+          "location": {
+            "type": "string",
+            "example": "San Francisco Convention Center, CA",
+            "description": "Event location"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-11-15T09:00:00.000Z",
+            "description": "Event start time"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-11-15T18:00:00.000Z",
+            "description": "Event end time"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 250,
+            "description": "Maximum attendee capacity"
+          },
+          "coverImageUrl": {
+            "type": "object",
+            "example": "https://images.unsplash.com/photo-1540575467063-178a50c2df87",
+            "description": "Cover image URL",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "CANCELLED"
+            ],
+            "example": "PUBLISHED",
+            "description": "Event publication status"
+          },
+          "organizerId": {
+            "type": "string",
+            "example": "d9b2d63d-a233-4123-8478-f7b8f9e61234",
+            "description": "Organizer user ID"
+          },
+          "organizer": {
+            "description": "Organizer profile details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            ]
+          },
+          "ticketsCount": {
+            "type": "number",
+            "example": 45,
+            "description": "Total number of confirmed RSVPs / tickets sold"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-29T01:00:00.000Z",
+            "description": "Record creation timestamp"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-29T01:00:00.000Z",
+            "description": "Record last updated timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "description",
+          "location",
+          "startsAt",
+          "endsAt",
+          "capacity",
+          "status",
+          "organizerId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedEventsDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "example": 42,
+            "description": "Total number of items matching filter"
+          },
+          "page": {
+            "type": "number",
+            "example": 1,
+            "description": "Current page number"
+          },
+          "pageSize": {
+            "type": "number",
+            "example": 10,
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 5,
+            "description": "Total number of available pages"
+          },
+          "items": {
+            "description": "Array of event records",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventResponseDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "items"
+        ]
+      },
+      "CreateEventDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Global Tech Summit 2026",
+            "description": "Title of the event"
+          },
+          "description": {
+            "type": "string",
+            "example": "Join premier industry leaders and developers for an immersive conference on modern cloud and distributed architectures.",
+            "description": "Detailed description of the event"
+          },
+          "location": {
+            "type": "string",
+            "example": "San Francisco Convention Center, CA",
+            "description": "Physical or virtual venue location"
+          },
+          "startsAt": {
+            "type": "string",
+            "example": "2026-11-15T09:00:00.000Z",
+            "description": "Event start time in ISO 8601 UTC format"
+          },
+          "endsAt": {
+            "type": "string",
+            "example": "2026-11-15T18:00:00.000Z",
+            "description": "Event end time in ISO 8601 UTC format"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 250,
+            "description": "Maximum attendee capacity",
+            "minimum": 1
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "example": "https://images.unsplash.com/photo-1540575467063-178a50c2df87",
+            "description": "Public URL to the cover banner image"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "CANCELLED"
+            ],
+            "default": "DRAFT",
+            "description": "Initial publication status of the event"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "location",
+          "startsAt",
+          "endsAt",
+          "capacity"
+        ]
+      },
+      "UpdateEventDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Global Tech Summit 2026 - Extended Edition",
+            "description": "Updated event title"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated comprehensive event description.",
+            "description": "Updated event description"
+          },
+          "location": {
+            "type": "string",
+            "example": "Moscone Center, San Francisco, CA",
+            "description": "Updated venue location"
+          },
+          "startsAt": {
+            "type": "string",
+            "example": "2026-11-15T09:00:00.000Z",
+            "description": "Updated event start time in ISO 8601 UTC format"
+          },
+          "endsAt": {
+            "type": "string",
+            "example": "2026-11-15T18:00:00.000Z",
+            "description": "Updated event end time in ISO 8601 UTC format"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 300,
+            "description": "Updated capacity (must not be lower than currently booked tickets)",
+            "minimum": 1
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "example": "https://images.unsplash.com/photo-1540575467063-178a50c2df87",
+            "description": "Updated cover image URL"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "CANCELLED"
+            ],
+            "description": "Update status (e.g. set to PUBLISHED to make public, or CANCELLED)"
+          }
+        }
+      },
+      "AttendeeResponseDto": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "description": "Ticket UUID"
+          },
+          "code": {
+            "type": "string",
+            "example": "EP-9f8e7d6c5b4a3210fedcba9876543210",
+            "description": "Unique ticket QR code string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "VALID",
+              "CHECKED_IN",
+              "CANCELLED"
+            ],
+            "example": "VALID",
+            "description": "Ticket status"
+          },
+          "checkedInAt": {
+            "type": "object",
+            "example": "2026-11-15T09:30:00.000Z",
+            "description": "Timestamp when ticket was checked in, or null",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-29T01:00:00.000Z",
+            "description": "RSVP timestamp"
+          },
+          "user": {
+            "description": "Attendee user details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "ticketId",
+          "code",
+          "status",
+          "createdAt",
+          "user"
+        ]
+      },
+      "TicketResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "description": "Unique ticket identifier (UUID)"
+          },
+          "code": {
+            "type": "string",
+            "example": "TKT_9f8e7d6c5b4a3210fedcba9876543210",
+            "description": "Cryptographically random string encoded in the QR code"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "VALID",
+              "CHECKED_IN",
+              "CANCELLED"
+            ],
+            "example": "VALID",
+            "description": "Ticket status (VALID, CHECKED_IN, CANCELLED)"
+          },
+          "eventId": {
+            "type": "string",
+            "example": "c6b3e21a-4d5e-4f12-9876-0a1b2c3d4e5f",
+            "description": "Associated event UUID"
+          },
+          "userId": {
+            "type": "string",
+            "example": "d9b2d63d-a233-4123-8478-f7b8f9e61234",
+            "description": "Ticket owner user UUID"
+          },
+          "checkedInAt": {
+            "type": "object",
+            "example": "2026-11-15T09:30:00.000Z",
+            "description": "Timestamp when ticket was checked in, or null",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-29T01:00:00.000Z",
+            "description": "Ticket issuance timestamp"
+          },
+          "event": {
+            "description": "Details of the associated event",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventResponseDto"
+              }
+            ]
+          },
+          "user": {
+            "description": "Details of the ticket owner",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "eventId",
+          "userId",
+          "createdAt"
+        ]
+      },
+      "CheckInDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "TKT_9f8e7d6c5b4a3210fedcba9876543210",
+            "description": "Cryptographically random ticket QR code value"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "CheckInResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Check-in successful",
+            "description": "Status message of the check-in operation"
+          },
+          "ticket": {
+            "description": "Updated ticket record after check-in",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message",
+          "ticket"
+        ]
+      },
+      "HealthResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok",
+            "description": "API health status"
+          },
+          "database": {
+            "type": "string",
+            "example": "healthy",
+            "description": "Database connection status"
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2026-10-29T01:00:00.000Z",
+            "description": "Current server UTC timestamp"
+          }
+        },
+        "required": [
+          "status",
+          "database",
+          "timestamp"
+        ]
+      }
+    }
+  }
+}

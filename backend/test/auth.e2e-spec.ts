@@ -239,4 +239,31 @@ describe('AuthController (e2e)', () => {
         .expect(401);
     });
   });
+
+  describe('Rate Limiting (429 Too Many Requests)', () => {
+    it('should return 429 and standard error shape when auth limit is exceeded', async () => {
+      let rateLimitedRes: request.Response | null = null;
+      for (let i = 0; i < 110; i++) {
+        const res = await request(app.getHttpServer())
+          .post('/v1/auth/login')
+          .send({
+            email: 'throttled@example.com',
+            password: 'WrongPassword!',
+          });
+        if (res.status === 429) {
+          rateLimitedRes = res;
+          break;
+        }
+      }
+
+      expect(rateLimitedRes).not.toBeNull();
+      expect(rateLimitedRes?.status).toBe(429);
+      expect(rateLimitedRes?.body).toMatchObject({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        path: '/v1/auth/login',
+      });
+      expect(rateLimitedRes?.body).toHaveProperty('timestamp');
+    });
+  });
 });
