@@ -41,4 +41,9 @@ npm run test
 npm run test:e2e
 ```
 
+### 5. Production Deployment & Docker
+- Multi-stage Docker build: `docker build -t eventpass-backend ./backend`
+- Full stack with Docker Compose: `docker compose up --build`
+- See [Production Deployment Guide](DEPLOYMENT.md) for AWS ECS, Google Cloud Run, Render, and horizontal scaling notes.
+
 For full architecture details, concurrency guarantees, and endpoint documentation, refer to the [Backend Documentation](backend/README.md).

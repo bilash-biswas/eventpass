@@ -317,5 +317,11 @@ All errors thrown by the application or Prisma ORM are captured by `AllException
 
 ---
 
+## 🚀 Deployment
+
+For production deployments, container orchestration (AWS ECS, Google Cloud Run, Render), zero-downtime database migrations, and horizontal scaling strategies, see the [Production Deployment Guide](../DEPLOYMENT.md).
+
+---
+
 ## 📄 License
 UNLICENSED — EventPass Portfolio Project.

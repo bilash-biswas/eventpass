@@ -23,7 +23,7 @@
     "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
     "export:openapi": "ts-node scripts/export-openapi.ts",
-    "prepare": "husky"
+    "prepare": "node -e \"try { if (require('fs').existsSync('../.git')) require('child_process').execSync('npx husky') } catch (e) {}\""
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
