@@ -77,7 +77,9 @@ export class EventsService {
     const skip = (page - 1) * pageSize;
 
     const where: Prisma.EventWhereInput = {
-      status: EventStatus.PUBLISHED,
+      ...(query.organizerId ? { organizerId: query.organizerId } : {}),
+      status:
+        query.status ?? (query.organizerId ? undefined : EventStatus.PUBLISHED),
     };
 
     if (query.search) {

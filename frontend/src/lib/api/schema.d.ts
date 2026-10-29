@@ -821,6 +821,10 @@ export interface operations {
                 pageSize?: number;
                 /** @description Search keyword matching title or location (case-insensitive) */
                 search?: string;
+                /** @description Filter events by organizer UUID */
+                organizerId?: string;
+                /** @description Filter events by publication status */
+                status?: "DRAFT" | "PUBLISHED" | "CANCELLED";
                 /** @description Filter events starting on or after this ISO 8601 date */
                 from?: string;
                 /** @description Filter events starting on or before this ISO 8601 date */

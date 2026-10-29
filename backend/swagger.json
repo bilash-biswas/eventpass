@@ -222,6 +222,30 @@
             }
           },
           {
+            "name": "organizerId",
+            "required": false,
+            "in": "query",
+            "description": "Filter events by organizer UUID",
+            "schema": {
+              "example": "d9b2d63d-a233-4123-8478-f7b8f9e61234",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter events by publication status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PUBLISHED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
             "name": "from",
             "required": false,
             "in": "query",

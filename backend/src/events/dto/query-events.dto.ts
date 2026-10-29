@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsISO8601, IsOptional, IsString } from 'class-validator';
+import { EventStatus } from '@prisma/client';
+import {
+  IsEnum,
+  IsISO8601,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 export enum EventSortOrder {
@@ -15,6 +22,22 @@ export class QueryEventsDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter events by organizer UUID',
+    example: 'd9b2d63d-a233-4123-8478-f7b8f9e61234',
+  })
+  @IsOptional()
+  @IsUUID('4')
+  organizerId?: string;
+
+  @ApiPropertyOptional({
+    enum: EventStatus,
+    description: 'Filter events by publication status',
+  })
+  @IsOptional()
+  @IsEnum(EventStatus)
+  status?: EventStatus;
 
   @ApiPropertyOptional({
     description: 'Filter events starting on or after this ISO 8601 date',
